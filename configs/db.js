@@ -3,6 +3,7 @@
 import mongoose from 'mongoose'
 
 export const dbConnection = async () => {
+
     try{
         mongoose.connection.on('error', () => {
             console.log('MongoDB | no se pudo conectar a mongoDB')
@@ -28,8 +29,8 @@ export const dbConnection = async () => {
         mongoose.connection.on('disconnected', () => {
             console.log('MongoDB | desconectado de mongoDB')
         })
-        
-        await mongoose.connect(process.env.URI_MONGODB, {
+        const uri = process.env.URI_MONGODB;
+        await mongoose.connect(uri, {
             serverSelectionTimeoutMS: 5000,
             maxPoolSize: 10
         })

@@ -1,0 +1,75 @@
+import User from "../users/user.model.js"
+import { hash, verify } from "argon2"
+import { generarJWT } from "../../helpers/JWT-generate.js"
+
+export const register = async (req, res) => {
+  try {
+    const data = req.body;
+    // Ahora se obtiene del middleware processFileUpload
+    let profilePicture = req.fileRelativePath || "profiles/default-avatar.png";
+    const encryptedPassword = await hash(data.password);
+
+    const user = await User.create({
+      username: data.username,
+      email: data.email,
+      name: data.name,
+      surname: data.surname,
+      password: encryptedPassword,
+      profilePicture
+    });
+
+    return res.status(200).json({
+      message: "User has been added to database",
+      userDetails: {
+        user: user.username,
+        email: user.email,
+      },
+    });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({
+      message: "User registration failed",
+      error: e.message
+    });
+  }
+};
+
+export const login = async (req, res) => {
+  const { email, password, username } = req.body;
+
+  try {
+    const lowerEmail = email ? email.toLowerCase() : null;
+    const lowerUsername = username ? username.toLowerCase() : null;
+
+    const user = await User.findOne({
+      $or: [{ email: lowerEmail }, { username: lowerUsername }],
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: "Credenciales incorrectas" });
+    }
+
+    const validPassword = await verify(user.password, password);
+    if (!validPassword) {
+      return res.status(401).json({ message: "Credenciales incorrectas" });
+    }
+
+    const token = await generarJWT(user.id, user.email);
+
+    return res.status(200).json({
+      message: "Login successful",
+      userDetails: {
+        username: user.username,
+        token: token,
+        profilePicture: user.profilePicture,
+        uid: user.id
+      },
+    });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({
+      message: "Server error",
+      error: "Please contact the administrator",
+    });
+  }
+};

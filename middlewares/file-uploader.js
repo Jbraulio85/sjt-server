@@ -1,17 +1,15 @@
 import multer from "multer";
-import { dirname, extname, join, basename } from "path";
-import { fileURLToPath } from "url";
+import { extname } from "path";
 import { v4 as uuidv4 } from "uuid";
+import { uploadsDir } from "../configs/paths.js";
 
-const CURRENT_DIR = dirname(fileURLToPath(import.meta.url));
-const IMAGE_MIMETYPES = ["image/jpeg", "image/png"];
 const VIDEO_MIMETYPES = ["video/mp4", "video/webm", "video/quicktime"];
 const MAX_FILE_SIZE = 10000000;
 
-const createMulterConfig = (destinationPath, allowedMimetypes) => {
+const createMulterConfig = (destinationAbsolute, allowedMimetypes) => {
   return multer({
     storage: multer.diskStorage({
-      destination: join(CURRENT_DIR, destinationPath),
+      destination: destinationAbsolute,
       filename: (req, file, cb) => {
         const fileExtension = extname(file.originalname);
         const fileName = file.originalname.split(fileExtension)[0];
@@ -50,10 +48,6 @@ const uploadWithTimeout = (uploader) => {
   };
 };
 
-export const uploadProfileImage = createMulterConfig(
-  "../assets/img/profiles",
-  IMAGE_MIMETYPES,
-);
 export const uploadPostVideo = uploadWithTimeout(
-  createMulterConfig("../assets/video/posts", VIDEO_MIMETYPES),
+  createMulterConfig(uploadsDir("assets", "video", "posts"), VIDEO_MIMETYPES),
 );

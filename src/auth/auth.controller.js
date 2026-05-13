@@ -1,12 +1,15 @@
 import User from "../users/user.model.js"
 import { hash, verify } from "argon2"
 import { generarJWT } from "../../helpers/JWT-generate.js"
+import { cloudinary } from "../../configs/cloudinary.js"
+
+const defaultProfilePicture = () =>
+  process.env.DEFAULT_PROFILE_PICTURE_URL || "profiles/default-avatar.png";
 
 export const register = async (req, res) => {
   try {
     const data = req.body;
-    // Ahora se obtiene del middleware processFileUpload
-    let profilePicture = req.fileRelativePath || "profiles/default-avatar.png";
+    let profilePicture = req.fileRelativePath || defaultProfilePicture();
     const encryptedPassword = await hash(data.password);
 
     const user = await User.create({
@@ -26,6 +29,13 @@ export const register = async (req, res) => {
       },
     });
   } catch (e) {
+    if (req.cloudinaryPublicId) {
+      try {
+        await cloudinary.uploader.destroy(req.cloudinaryPublicId);
+      } catch (destroyErr) {
+        console.error("Cloudinary destroy tras error de registro:", destroyErr);
+      }
+    }
     console.error(e);
     return res.status(500).json({
       message: "User registration failed",

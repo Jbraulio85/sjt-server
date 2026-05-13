@@ -1,8 +1,6 @@
 import { check } from "express-validator";
 import { validarCampos } from "./validate-values.js";
 import { existeEmail } from "../helpers/db-validators.js";
-import { processFileUpload } from "./process-file-upload.js";
-import { deleteFileOnError } from "./delete-file-on-error.js";
 
 export const registerValidator = [
   check("name", "El nombre es obligatorio").not().isEmpty(),
@@ -14,8 +12,6 @@ export const registerValidator = [
     min: 6,
   }),
   validarCampos,
-  processFileUpload, // Procesa la información del archivo subido
-  deleteFileOnError,  // Limpia archivos en caso de error
 ];
 
 export const loginValidator = [

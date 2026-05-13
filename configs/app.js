@@ -45,6 +45,10 @@ const conectarDB = async () => {
 export const initServer = async () => {
     const app = express();
 
+    if (process.env.VERCEL) {
+        app.set('trust proxy', 1);
+    }
+
     try{
         middlewares(app)
         routes(app)

@@ -4,7 +4,6 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import { dbConnection } from './db.js';
 import 'dotenv/config';
 import userModel from '../src/users/user.model.js'
 import authRoutes from '../src/auth/auth.routes.js';
@@ -34,26 +33,16 @@ const routes = (app) => {
     app.use('/api/v1/comments', commentRoutes);
 }
 
-const conectarDB = async () => {
-    try{
-        await dbConnection();
-    }catch(error){
-        console.log(`Error al conectar la db: ${error.message}`)
-    }
-}
-
-export const initServer = async () => {
+export const createApp = () => {
     const app = express();
 
-    try{
-        middlewares(app)
-        routes(app)
-        app.use(handleErrors)
-        await conectarDB()
-        app.listen(process.env.PORT, () =>{
-            console.log(`Server running on port: ${process.env.PORT}`)
-        })
-    }catch(error){
-        console.log(`Error al iniciar el servidor: ${error}`);
+    try {
+        middlewares(app);
+        routes(app);
+        app.use(handleErrors);
+    } catch (error) {
+        console.log(`Error al configurar la aplicación: ${error}`);
     }
-}
+
+    return app;
+};

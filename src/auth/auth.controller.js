@@ -44,16 +44,45 @@ export const register = async (req, res) => {
   }
 };
 
+const escapeRegex = (value = "") =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 export const login = async (req, res) => {
-  const { email, password, username } = req.body;
+  let { email, password, username } = req.body;
 
   try {
-    const lowerEmail = email ? email.toLowerCase() : null;
-    const lowerUsername = username ? username.toLowerCase() : null;
+    const identifier = (username || email || "").trim();
+    const isEmail = identifier.includes("@");
 
-    const user = await User.findOne({
-      $or: [{ email: lowerEmail }, { username: lowerUsername }],
-    });
+    if (!email && isEmail) {
+      email = identifier;
+      username = null;
+    } else if (!username && email) {
+      username = null;
+    } else if (username) {
+      username = identifier;
+    }
+
+    const lowerEmail = email ? email.toLowerCase() : null;
+    const trimmedUsername = username?.trim() || null;
+
+    const query = [];
+    if (lowerEmail) {
+      query.push({ email: lowerEmail });
+    }
+    if (trimmedUsername) {
+      query.push({
+        username: {
+          $regex: new RegExp(`^${escapeRegex(trimmedUsername)}$`, "i"),
+        },
+      });
+    }
+
+    if (!query.length || !password) {
+      return res.status(401).json({ message: "Credenciales incorrectas" });
+    }
+
+    const user = await User.findOne({ $or: query });
 
     if (!user) {
       return res.status(401).json({ message: "Credenciales incorrectas" });
